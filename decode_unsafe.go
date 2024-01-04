@@ -1,6 +1,10 @@
+//go:build go1.20
+// +build go1.20
+
 package lz4decode
 
 import (
+	"fmt"
 	"unsafe"
 )
 
@@ -55,6 +59,16 @@ func u16S(s []byte, offset uint) uint {
 	return uint(*(*uint16)(unsafe.Pointer(
 		uintptr(unsafe.Pointer(unsafe.SliceData(s))) + uintptr(offset),
 	)))
+}
+
+func UncompressBlockGoFast(src, dst, dict []byte) (int, error) {
+	if len(src) == 0 {
+		return 0, nil
+	}
+	if di := decodeBlockGoInline2(dst, src, dict); di >= 0 {
+		return di, nil
+	}
+	return 0, fmt.Errorf("short buffers")
 }
 
 func decodeBlockGoInline2(dst, src, dict []byte) (ret int) {

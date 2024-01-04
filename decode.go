@@ -15,16 +15,6 @@ func UncompressBlockGo(src, dst, dict []byte) (int, error) {
 	return 0, fmt.Errorf("short buffers")
 }
 
-func UncompressBlockGoFast(src, dst, dict []byte) (int, error) {
-	if len(src) == 0 {
-		return 0, nil
-	}
-	if di := decodeBlockGoInline2(dst, src, dict); di >= 0 {
-		return di, nil
-	}
-	return 0, fmt.Errorf("short buffers")
-}
-
 func decodeBlockGo(dst, src, dict []byte) (ret int) {
 	// Restrict capacities so we don't read or write out of bounds.
 	dst = dst[:len(dst):len(dst)]

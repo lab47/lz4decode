@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var testfuncs = []func(dst, src, dict []byte) int{
-	decodeBlockGo,
-	decodeBlockGoInline2,
+var testfuncs = []func(dst, src, dict []byte) (int, error){
+	UncompressBlockGo,
+	UncompressBlockGoFast,
 }
 
 func TestBlockDecode(t *testing.T) {
@@ -158,8 +158,8 @@ func TestBlockDecode(t *testing.T) {
 			if !bytes.Equal(buf, test.exp) {
 				t.Fatalf("expected %q got %q", test.exp, buf)
 			}
-			for _, decodeBlockGo := range testfuncs {
-				n = decodeBlockGo(buf, test.src, nil)
+			for _, f := range testfuncs {
+				n, _ = f(test.src, buf, nil)
 				if n != len(test.exp) {
 					t.Errorf("expected %d, got %d", len(test.exp), n)
 				}
@@ -179,11 +179,6 @@ func TestDecodeBlockInvalid(t *testing.T) {
 		src  string
 		size int // Output size to try.
 	}{
-		{
-			"empty_input",
-			"",
-			100,
-		},
 		{
 			// A string of zeros could be interpreted as empty match+empty literal repeated,
 			// but only the last block may have an empty match (with the offset missing).
@@ -251,9 +246,9 @@ func TestDecodeBlockInvalid(t *testing.T) {
 			}
 			dst = dst[:test.size]
 
-			for _, decodeBlockGo := range testfuncs {
-				r = decodeBlockGo(dst, []byte(test.src), nil)
-				if r >= 0 {
+			for _, f := range testfuncs {
+				_, err := f([]byte(test.src), dst, nil)
+				if err == nil {
 					t.Errorf("no error for %s", test.name)
 				}
 
@@ -298,9 +293,9 @@ func TestLongLengths(t *testing.T) {
 		t.Errorf("want error, got %d (remain=%d)", r, remain)
 	}
 
-	for _, decodeBlockGo := range testfuncs {
-		r = decodeBlockGo(dst, src, nil)
-		if r >= 0 {
+	for _, f := range testfuncs {
+		_, err := f(src, dst, nil)
+		if err == nil {
 			t.Errorf("want error, got %d (remain=%d)", r, remain)
 		}
 	}
@@ -349,12 +344,12 @@ func TestDecodeWithDict(t *testing.T) {
 			}
 		}
 
-		for _, decodeBlockGo := range testfuncs {
-			r = decodeBlockGo(dst, []byte(c.src), dict)
+		for _, f := range testfuncs {
+			r, err := f([]byte(c.src), dst, dict)
 
 			if c.want == "" {
-				if r >= 0 {
-					t.Error("expected an error, got", r)
+				if err == nil {
+					t.Error("expected an error, got", err)
 				}
 			} else {
 				switch {
