@@ -1,7 +1,5 @@
 module github.com/lab47/lz4decode
 
-go 1.21.4
-
 require (
 	github.com/pierrec/lz4/v4 v4.1.19
 	github.com/stretchr/testify v1.8.4
