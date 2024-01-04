@@ -25,5 +25,8 @@ jobs:
       with:
         go-version: ${{ matrix.go }}
 
+    - name: Setup
+      run: go mod tidy
+
     - name: Benchmark
       run: go test -v -bench . -benchtime 10s ./...
