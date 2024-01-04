@@ -363,14 +363,6 @@ func TestDecodeWithDict(t *testing.T) {
 	}
 }
 
-func TestRawCopy(t *testing.T) {
-	t.Run("3", func(t *testing.T) {
-		b := make([]byte, 100)
-
-		copy3(b, 9, []byte("hello"))
-	})
-}
-
 func BenchmarkCopy(t *testing.B) {
 	data := make([]byte, 4*4096)
 
