@@ -479,15 +479,13 @@ func BenchmarkSpeckled(t *testing.B) {
 }
 
 func BenchmarkWords(t *testing.B) {
-	path := "/usr/share/dict/words"
+	path := "./words"
 	if _, err := os.Stat(path); err != nil {
 		t.Skip()
 	}
 
-	data, err := os.ReadFile("/usr/share/dict/words")
+	data, err := os.ReadFile("./words")
 	require.NoError(t, err)
-
-	data = data[:16*1024]
 
 	comp := make([]byte, lz4.CompressBlockBound(len(data)))
 
