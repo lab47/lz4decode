@@ -1,6 +1,3 @@
-//go:build go1.20
-// +build go1.20
-
 package lz4decode
 
 import (
@@ -8,37 +5,32 @@ import (
 	"unsafe"
 )
 
-func xWrite(s []byte, b byte) {
-	ptr := unsafe.SliceData(s)
-	*ptr = b
-}
-
 func copy8(d []byte, di uint, s []byte) {
-	*(*uint64)(unsafe.Pointer(uintptr(unsafe.Pointer(unsafe.SliceData(d))) + uintptr(di))) = *(*uint64)(unsafe.Pointer(unsafe.SliceData(s)))
+	*(*uint64)(unsafe.Pointer(uintptr(unsafe.Pointer(sliceData(d))) + uintptr(di))) = *(*uint64)(unsafe.Pointer(sliceData(s)))
 }
 
 func copy7(d []byte, di uint, s []byte) {
-	*(*[7]byte)(unsafe.Pointer(uintptr(unsafe.Pointer(unsafe.SliceData(d))) + uintptr(di))) = *(*[7]byte)(unsafe.Pointer(unsafe.SliceData(s)))
+	*(*[7]byte)(unsafe.Pointer(uintptr(unsafe.Pointer(sliceData(d))) + uintptr(di))) = *(*[7]byte)(unsafe.Pointer(sliceData(s)))
 }
 
 func copy6(d []byte, di uint, s []byte) {
-	*(*[6]byte)(unsafe.Pointer(uintptr(unsafe.Pointer(unsafe.SliceData(d))) + uintptr(di))) = *(*[6]byte)(unsafe.Pointer(unsafe.SliceData(s)))
+	*(*[6]byte)(unsafe.Pointer(uintptr(unsafe.Pointer(sliceData(d))) + uintptr(di))) = *(*[6]byte)(unsafe.Pointer(sliceData(s)))
 }
 
 func copy5(d []byte, di uint, s []byte) {
-	*(*[5]byte)(unsafe.Pointer(uintptr(unsafe.Pointer(unsafe.SliceData(d))) + uintptr(di))) = *(*[5]byte)(unsafe.Pointer(unsafe.SliceData(s)))
+	*(*[5]byte)(unsafe.Pointer(uintptr(unsafe.Pointer(sliceData(d))) + uintptr(di))) = *(*[5]byte)(unsafe.Pointer(sliceData(s)))
 }
 
 func copy4(d []byte, di uint, s []byte) {
-	*(*[4]byte)(unsafe.Pointer(uintptr(unsafe.Pointer(unsafe.SliceData(d))) + uintptr(di))) = *(*[4]byte)(unsafe.Pointer(unsafe.SliceData(s)))
+	*(*[4]byte)(unsafe.Pointer(uintptr(unsafe.Pointer(sliceData(d))) + uintptr(di))) = *(*[4]byte)(unsafe.Pointer(sliceData(s)))
 }
 
 func copy3(d []byte, di uint, s []byte) {
-	*(*[3]byte)(unsafe.Pointer(uintptr(unsafe.Pointer(unsafe.SliceData(d))) + uintptr(di))) = *(*[3]byte)(unsafe.Pointer(unsafe.SliceData(s)))
+	*(*[3]byte)(unsafe.Pointer(uintptr(unsafe.Pointer(sliceData(d))) + uintptr(di))) = *(*[3]byte)(unsafe.Pointer(sliceData(s)))
 }
 
 func copy2(d []byte, di uint, s []byte) {
-	*(*[2]byte)(unsafe.Pointer(uintptr(unsafe.Pointer(unsafe.SliceData(d))) + uintptr(di))) = *(*[2]byte)(unsafe.Pointer(unsafe.SliceData(s)))
+	*(*[2]byte)(unsafe.Pointer(uintptr(unsafe.Pointer(sliceData(d))) + uintptr(di))) = *(*[2]byte)(unsafe.Pointer(sliceData(s)))
 }
 
 func copy1(d []byte, di uint, s []byte) {
@@ -47,17 +39,17 @@ func copy1(d []byte, di uint, s []byte) {
 
 func copy16(d []byte, di uint, s []byte, si uint) {
 	type blah struct{ x, y uint64 }
-	*(*blah)(unsafe.Pointer(uintptr(unsafe.Pointer(unsafe.SliceData(d))) + uintptr(di))) = *(*blah)(unsafe.Pointer(uintptr(unsafe.Pointer(unsafe.SliceData(s))) + uintptr(si)))
+	*(*blah)(unsafe.Pointer(uintptr(unsafe.Pointer(sliceData(d))) + uintptr(di))) = *(*blah)(unsafe.Pointer(uintptr(unsafe.Pointer(sliceData(s))) + uintptr(si)))
 }
 
 func copy18(d []byte, di uint, s []byte, si uint) {
 	copy16(d, di, s, si)
-	*(*uint16)(unsafe.Pointer(uintptr(unsafe.Pointer(unsafe.SliceData(d))) + uintptr(di+16))) = *(*uint16)(unsafe.Pointer(uintptr(unsafe.Pointer(unsafe.SliceData(s))) + uintptr(si+16)))
+	*(*uint16)(unsafe.Pointer(uintptr(unsafe.Pointer(sliceData(d))) + uintptr(di+16))) = *(*uint16)(unsafe.Pointer(uintptr(unsafe.Pointer(sliceData(s))) + uintptr(si+16)))
 }
 
 func u16S(s []byte, offset uint) uint {
 	return uint(*(*uint16)(unsafe.Pointer(
-		uintptr(unsafe.Pointer(unsafe.SliceData(s))) + uintptr(offset),
+		uintptr(unsafe.Pointer(sliceData(s))) + uintptr(offset),
 	)))
 }
 
