@@ -88,7 +88,8 @@ func decodeBlockGoInline2(dst, src, dict []byte) (ret int) {
 
 		// Literals.
 		edge := si + 16
-		if lLen := b >> 4; lLen > 0 {
+		lLen := b >> 4
+		if lLen > 0 {
 			switch {
 			case lLen < 0xF && edge < uint(len(src)):
 				// Shortcut 1
@@ -102,7 +103,7 @@ func decodeBlockGoInline2(dst, src, dict []byte) (ret int) {
 					// Shortcut 2
 					// if the match length (4..18) fits within the literals, then copy
 					// all 18 bytes, even if not all are part of the literals.
-					mLen += 4
+					mLen += minMatch
 					offset := u16S(src, si)
 					i := di - offset
 					if mLen <= offset && offset < di {
@@ -117,18 +118,60 @@ func decodeBlockGoInline2(dst, src, dict []byte) (ret int) {
 					}
 				}
 			case lLen == 0xF:
-				for {
-					x := uint(src[si])
-					si++
-					if lLen += x; int(lLen) < 0 {
-						return hasError
-					}
-					if x != 0xFF {
-						break
-					}
+				// doubles are most common, let's handle them special
+				x := uint(src[si])
+				si++
+				if lLen += x; int(lLen) < 0 {
+					return hasError
 				}
-				fallthrough
+
+				if x != 0xff {
+					// Shortcut 3a
+					// Perform the copy (it's probably large because it took 2
+					// bytes), then perform the short match logic like we do above.
+					copy(dst[di:di+lLen], src[si:si+lLen])
+					si += lLen
+					di += lLen
+
+					// Shortcut 3b
+					// if the match length (4..18) fits within the literals, then copy
+					// all 18 bytes, even if not all are part of the literals.
+					if mLen := b & 0xF; mLen < 0xF {
+						mLen += minMatch
+						offset := u16S(src, si)
+						i := di - offset
+						if mLen <= offset && offset < di {
+							// The remaining buffer may not hold 18 bytes.
+							// See https://github.com/pierrec/lz4/issues/51.
+							if end := i + 18; end <= uint(len(dst)) {
+								copy18(dst, di, dst, i)
+								si += 2
+								di += mLen
+								continue
+							}
+						}
+					}
+				} else {
+					// Only used for 3+ length bytes
+					for {
+						x := uint(src[si])
+						si++
+						if lLen += x; int(lLen) < 0 {
+							return hasError
+						}
+						if x != 0xFF {
+							break
+						}
+					}
+
+					copy(dst[di:di+lLen], src[si:si+lLen])
+					si += lLen
+					di += lLen
+				}
+
 			default:
+				// Only used as a fallback in the case that
+				// it's a short len but there isn't enough for a 16 byte copy.
 				copy(dst[di:di+lLen], src[si:si+lLen])
 				si += lLen
 				di += lLen
