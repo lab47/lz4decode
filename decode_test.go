@@ -361,6 +361,40 @@ func TestDecodeWithDict(t *testing.T) {
 	}
 }
 
+func TestMT(t *testing.T) {
+	data, err := os.ReadFile("./testdata/Mark.Twain-Tom.Sawyer.txt")
+	require.NoError(t, err)
+
+	comp := make([]byte, lz4.CompressBlockBound(len(data)))
+
+	sz, err := lz4.CompressBlock(data, comp, nil)
+	require.NoError(t, err)
+
+	comp = comp[:sz]
+
+	testfuncs := []struct {
+		n string
+		f func(src, dst, dict []byte) (int, error)
+	}{
+		{"asm", UncompressBlockAsm},
+		{"go", UncompressBlockGo},
+		{"ic", UncompressBlockInlineCopy},
+	}
+
+	for _, f := range testfuncs {
+		t.Run(f.n, func(t *testing.T) {
+			out := make([]byte, len(data))
+
+			n, err := f.f(comp, out, nil)
+			require.NoError(t, err)
+
+			require.Equal(t, n, len(data))
+
+			require.True(t, bytes.Equal(out, data))
+		})
+	}
+}
+
 func BenchmarkCopy(t *testing.B) {
 	data := make([]byte, 4*4096)
 
@@ -473,6 +507,55 @@ func BenchmarkWords(t *testing.B) {
 	}
 
 	data, err := os.ReadFile("./words")
+	require.NoError(t, err)
+
+	comp := make([]byte, lz4.CompressBlockBound(len(data)))
+
+	sz, err := lz4.CompressBlock(data, comp, nil)
+
+	t.Logf("compressed size: %d", sz)
+
+	r := require.New(t)
+
+	r.NoError(err)
+
+	x := comp[:sz]
+
+	t.Run("memory", func(b *testing.B) {
+		dest := make([]byte, len(data))
+
+		for i := 0; i < b.N; i++ {
+			copy(dest, data)
+		}
+	})
+
+	t.Run("lz4 asm", func(b *testing.B) {
+		dest := make([]byte, len(data))
+
+		for i := 0; i < b.N; i++ {
+			UncompressBlockAsm(x, dest, nil)
+		}
+	})
+
+	t.Run("lz4 go", func(b *testing.B) {
+		dest := make([]byte, len(data))
+
+		for i := 0; i < b.N; i++ {
+			UncompressBlockGo(x, dest, nil)
+		}
+	})
+
+	t.Run("lz4 ic", func(b *testing.B) {
+		dest := make([]byte, len(data))
+
+		for i := 0; i < b.N; i++ {
+			UncompressBlockInlineCopy(x, dest, nil)
+		}
+	})
+}
+
+func BenchmarkMT(t *testing.B) {
+	data, err := os.ReadFile("./testdata/Mark.Twain-Tom.Sawyer.txt")
 	require.NoError(t, err)
 
 	comp := make([]byte, lz4.CompressBlockBound(len(data)))
