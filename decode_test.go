@@ -12,7 +12,7 @@ import (
 
 var testfuncs = []func(dst, src, dict []byte) (int, error){
 	UncompressBlockGo,
-	UncompressBlockGoFast,
+	UncompressBlockInlineCopy,
 }
 
 func TestBlockDecode(t *testing.T) {
@@ -201,13 +201,11 @@ func TestDecodeBlockInvalid(t *testing.T) {
 			"\x01", // mLen > 0 but no following offset.
 			10,
 		},
-		/*
-			{
-				"write_beyond_len_dst",
-				"\x1b0\x01\x00000000000000",
-				len("\x1b0\x01\x00000000000000"),
-			},
-		*/
+		{
+			"write_beyond_len_dst",
+			"\x1b0\x01\x00000000000000",
+			len("\x1b0\x01\x00000000000000"),
+		},
 		{
 			"bounds-crasher", // Triggered a broken bounds check in amd64 decoder.
 			"\x000000",
@@ -240,13 +238,13 @@ func TestDecodeBlockInvalid(t *testing.T) {
 				}
 			}
 
-			dst = make([]byte, test.size+8)
-			for i := range dst {
-				dst[i] = byte(i)
-			}
-			dst = dst[:test.size]
+			for fi, f := range testfuncs {
+				dst = make([]byte, test.size+8)
+				for i := range dst {
+					dst[i] = byte(i)
+				}
+				dst = dst[:test.size]
 
-			for _, f := range testfuncs {
 				_, err := f([]byte(test.src), dst, nil)
 				if err == nil {
 					t.Errorf("no error for %s", test.name)
@@ -255,7 +253,7 @@ func TestDecodeBlockInvalid(t *testing.T) {
 				dst = dst[:cap(dst)]
 				for i := test.size; i < len(dst); i++ {
 					if dst[i] != byte(i) {
-						t.Error("decodeBlockGo wrote out of bounds")
+						t.Errorf("%d wrote out of bounds", fi)
 						break
 					}
 				}
@@ -406,7 +404,7 @@ func BenchmarkCopy(t *testing.B) {
 		dest := make([]byte, 4*4096)
 
 		for i := 0; i < b.N; i++ {
-			UncompressBlockGoFast(x, dest, nil)
+			UncompressBlockInlineCopy(x, dest, nil)
 		}
 	})
 }
@@ -463,7 +461,7 @@ func BenchmarkSpeckled(t *testing.B) {
 		dest := make([]byte, 4*4096)
 
 		for i := 0; i < b.N; i++ {
-			UncompressBlockGoFast(x, dest, nil)
+			UncompressBlockInlineCopy(x, dest, nil)
 		}
 	})
 
@@ -527,7 +525,7 @@ func BenchmarkWords(t *testing.B) {
 		dest := make([]byte, len(data))
 
 		for i := 0; i < b.N; i++ {
-			UncompressBlockGoFast(x, dest, nil)
+			UncompressBlockInlineCopy(x, dest, nil)
 		}
 	})
 }

@@ -5,6 +5,18 @@ import (
 	"unsafe"
 )
 
+// Uncompress the block using the Go implementation that utilizes unsafe
+// to speed up copy operations.
+func UncompressBlockInlineCopy(src, dst, dict []byte) (int, error) {
+	if len(src) == 0 {
+		return 0, nil
+	}
+	if di := decodeBlockInlineCopy(dst, src, dict); di >= 0 {
+		return di, nil
+	}
+	return 0, fmt.Errorf("short buffers")
+}
+
 func copy8(d []byte, di uint, s []byte) {
 	*(*uint64)(unsafe.Pointer(uintptr(unsafe.Pointer(sliceData(d))) + uintptr(di))) = *(*uint64)(unsafe.Pointer(sliceData(s)))
 }
@@ -53,17 +65,7 @@ func u16S(s []byte, offset uint) uint {
 	)))
 }
 
-func UncompressBlockGoFast(src, dst, dict []byte) (int, error) {
-	if len(src) == 0 {
-		return 0, nil
-	}
-	if di := decodeBlockGoInline2(dst, src, dict); di >= 0 {
-		return di, nil
-	}
-	return 0, fmt.Errorf("short buffers")
-}
-
-func decodeBlockGoInline2(dst, src, dict []byte) (ret int) {
+func decodeBlockInlineCopy(dst, src, dict []byte) (ret int) {
 	// Restrict capacities so we don't read or write out of bounds.
 	dst = dst[:len(dst):len(dst)]
 	src = src[:len(src):len(src)]
@@ -89,6 +91,7 @@ func decodeBlockGoInline2(dst, src, dict []byte) (ret int) {
 		// Literals.
 		edge := si + 16
 		lLen := b >> 4
+
 		if lLen > 0 {
 			switch {
 			case lLen < 0xF && edge < uint(len(src)):
@@ -96,6 +99,10 @@ func decodeBlockGoInline2(dst, src, dict []byte) (ret int) {
 				// if we have enough room in src and dst, and the literals length
 				// is small enough (0..14) then copy all 16 bytes, even if not all
 				// are part of the literals.
+				if di+16 > uint(len(dst)) {
+					return hasError
+				}
+
 				copy16(dst, di, src, si)
 				si += lLen
 				di += lLen

@@ -1,8 +1,6 @@
 package lz4decode
 
-import (
-	"fmt"
-)
+import "fmt"
 
 const (
 	// The following constants are used to setup the compression algorithm.
@@ -21,7 +19,8 @@ const (
 	mfLimit = 10 + minMatch // The last match cannot start within the last 14 bytes.
 )
 
-func UncompressBlock(src, dst, dict []byte) (int, error) {
+// Uncompress the block using the hand coded per-platorm assembly (amd64, arm64, arm). Defaults to UncompressBlockGo if no assembly available.
+func UncompressBlockAsm(src, dst, dict []byte) (int, error) {
 	if len(src) == 0 {
 		return 0, nil
 	}
