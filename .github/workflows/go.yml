@@ -11,8 +11,28 @@ on:
 
 jobs:
 
-  build:
+  benchmark-amd64:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: [ '1.17', '1.18', '1.19', '1.20', '1.21' ]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ matrix.go }}
+
+    - name: Setup
+      run: go mod tidy
+
+    - name: Benchmark
+      run: go test -v -bench . -benchtime 10s ./...
+
+  benchmark-arm64:
+    runs-on: self-hosted
     strategy:
       matrix:
         go: [ '1.17', '1.18', '1.19', '1.20', '1.21' ]
