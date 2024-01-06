@@ -384,11 +384,11 @@ func BenchmarkCopy(t *testing.B) {
 		}
 	})
 
-	t.Run("lz4", func(b *testing.B) {
+	t.Run("lz4 asm", func(b *testing.B) {
 		dest := make([]byte, 4*4096)
 
 		for i := 0; i < b.N; i++ {
-			UncompressBlock(x, dest, nil)
+			UncompressBlockAsm(x, dest, nil)
 		}
 	})
 
@@ -400,7 +400,7 @@ func BenchmarkCopy(t *testing.B) {
 		}
 	})
 
-	t.Run("lz4 go2", func(b *testing.B) {
+	t.Run("lz4 ic", func(b *testing.B) {
 		dest := make([]byte, 4*4096)
 
 		for i := 0; i < b.N; i++ {
@@ -441,11 +441,11 @@ func BenchmarkSpeckled(t *testing.B) {
 		}
 	})
 
-	t.Run("lz4", func(b *testing.B) {
+	t.Run("lz4 asm", func(b *testing.B) {
 		dest := make([]byte, 4*4096)
 
 		for i := 0; i < b.N; i++ {
-			UncompressBlock(x, dest, nil)
+			UncompressBlockAsm(x, dest, nil)
 		}
 	})
 
@@ -457,23 +457,13 @@ func BenchmarkSpeckled(t *testing.B) {
 		}
 	})
 
-	t.Run("lz4 go2", func(b *testing.B) {
+	t.Run("lz4 ic", func(b *testing.B) {
 		dest := make([]byte, 4*4096)
 
 		for i := 0; i < b.N; i++ {
 			UncompressBlockInlineCopy(x, dest, nil)
 		}
 	})
-
-	/*
-		t.Run("lz4 cgo", func(b *testing.B) {
-			dest := make([]byte, len(data))
-
-			for i := 0; i < b.N; i++ {
-				lz4n.Uncompress(dest, x)
-			}
-		})
-	*/
 }
 
 func BenchmarkWords(t *testing.B) {
@@ -505,11 +495,11 @@ func BenchmarkWords(t *testing.B) {
 		}
 	})
 
-	t.Run("lz4", func(b *testing.B) {
+	t.Run("lz4 asm", func(b *testing.B) {
 		dest := make([]byte, len(data))
 
 		for i := 0; i < b.N; i++ {
-			UncompressBlock(x, dest, nil)
+			UncompressBlockAsm(x, dest, nil)
 		}
 	})
 
@@ -521,7 +511,7 @@ func BenchmarkWords(t *testing.B) {
 		}
 	})
 
-	t.Run("lz4 go2", func(b *testing.B) {
+	t.Run("lz4 ic", func(b *testing.B) {
 		dest := make([]byte, len(data))
 
 		for i := 0; i < b.N; i++ {
